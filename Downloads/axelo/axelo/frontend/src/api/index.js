@@ -37,7 +37,7 @@ export const authApi = {
 
 // Projects
 export const projectsApi = {
-  list: () => api.get('/projects/'),
+  list: (params) => api.get('/projects/', { params }),
   create: (data) => api.post('/projects/', data),
   get: (id) => api.get(`/projects/${id}`),
   update: (id, data) => api.patch(`/projects/${id}`, data),
@@ -59,16 +59,37 @@ export const issuesApi = {
 
 // Sprints
 export const sprintsApi = {
-  list: (projectId) => api.get(`/projects/${projectId}/sprints/`),
+  list: (projectId, params) => api.get(`/projects/${projectId}/sprints/`, { params }),
   create: (projectId, data) => api.post(`/projects/${projectId}/sprints/`, data),
   update: (projectId, sprintId, data) => api.patch(`/projects/${projectId}/sprints/${sprintId}`, data),
   delete: (projectId, sprintId) => api.delete(`/projects/${projectId}/sprints/${sprintId}`),
+  burndown: (projectId, sprintId) => api.get(`/projects/${projectId}/sprints/${sprintId}/burndown`),
 }
-
-export default api
 
 // Calendar
 export const calendarApi = {
   getMonth: (year, month) => api.get('/calendar/', { params: { year, month } }),
   setDueDate: (issueId, due_date) => api.patch(`/calendar/${issueId}/due-date`, { due_date }),
 }
+
+// Notifications
+export const notificationsApi = {
+  list: (params) => api.get('/notifications/', { params }),
+  unreadCount: () => api.get('/notifications/unread-count'),
+  markRead: (id) => api.patch(`/notifications/${id}/read`),
+  markAllRead: () => api.patch('/notifications/read-all'),
+}
+
+// Search
+export const searchApi = {
+  search: (q, project_id) => api.get('/search/', { params: { q, project_id } }),
+}
+
+// Templates
+export const templatesApi = {
+  list: (projectId) => api.get(`/projects/${projectId}/templates/`),
+  create: (projectId, data) => api.post(`/projects/${projectId}/templates/`, data),
+  delete: (projectId, templateId) => api.delete(`/projects/${projectId}/templates/${templateId}`),
+}
+
+export default api

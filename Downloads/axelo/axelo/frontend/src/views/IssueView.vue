@@ -127,10 +127,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { formatDistanceToNow } from 'date-fns'
 import Navbar from '@/components/Navbar.vue'
 import { useIssuesStore } from '@/store/issues'
+import { useAuthStore } from '@/store/auth'
+import { useWebSocket } from '@/composables/useWebSocket'
 
 const route = useRoute()
 const router = useRouter()
 const issuesStore = useIssuesStore()
+const authStore = useAuthStore()
 const projectId = computed(() => Number(route.params.id))
 const issueId = computed(() => Number(route.params.issueId))
 const issue = computed(() => issuesStore.currentIssue)
@@ -141,7 +144,24 @@ const editingDesc = ref(false)
 const editDesc = ref('')
 const titleInput = ref(null)
 
-onMounted(() => issuesStore.fetchIssue(projectId.value, issueId.value))
+onMounted(() => {
+  issuesStore.fetchIssue(projectId.value, issueId.value)
+  const token = authStore.token
+  if (token) {
+    useWebSocket(projectId.value, token, {
+      'comment.created': (data) => {
+        if (data.issue_id === issueId.value) {
+          issuesStore.fetchIssue(projectId.value, issueId.value)
+        }
+      },
+      'issue.updated': (data) => {
+        if (data.id === issueId.value) {
+          issuesStore.fetchIssue(projectId.value, issueId.value)
+        }
+      },
+    })
+  }
+})
 
 const formatDate = (d) => formatDistanceToNow(new Date(d), { addSuffix: true })
 const updateField = (field, value) => issuesStore.updateIssue(projectId.value, issueId.value, { [field]: value })

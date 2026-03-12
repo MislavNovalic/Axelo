@@ -2,6 +2,22 @@
   <div class="modal-overlay" @click.self="$emit('close')">
     <div class="modal">
       <h2>+ New Issue</h2>
+
+      <!-- Template picker -->
+      <div v-if="templates.length" class="form-group">
+        <label class="fd-label">Start from template</label>
+        <div class="template-row">
+          <button
+            v-for="t in templates"
+            :key="t.id"
+            class="template-chip"
+            :class="{ active: selectedTemplate?.id === t.id }"
+            @click="applyTemplate(t)"
+          >{{ t.name }}</button>
+          <button v-if="selectedTemplate" class="template-chip clear" @click="clearTemplate">✕ Clear</button>
+        </div>
+      </div>
+
       <div class="form-group">
         <label class="fd-label">Title *</label>
         <input v-model="form.title" class="fd-input" placeholder="What needs to be done?" />
@@ -54,21 +70,55 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useIssuesStore } from '@/store/issues'
+import { templatesApi } from '@/api'
+
 const props = defineProps({ projectId: Number, sprints: Array })
 const emit = defineEmits(['close', 'created'])
 const issuesStore = useIssuesStore()
 const loading = ref(false)
-const form = ref({ title: '', type: 'task', priority: 'medium', description: '', story_points: null, sprint_id: null })
+const templates = ref([])
+const selectedTemplate = ref(null)
+
+const defaultForm = () => ({ title: '', type: 'task', priority: 'medium', description: '', story_points: null, sprint_id: null })
+const form = ref(defaultForm())
+
+onMounted(async () => {
+  try {
+    const res = await templatesApi.list(props.projectId)
+    templates.value = res.data
+  } catch {
+    // templates are optional — ignore errors
+  }
+})
+
+function applyTemplate(t) {
+  selectedTemplate.value = t
+  form.value = {
+    ...form.value,
+    type: t.type,
+    priority: t.priority,
+    description: t.description || '',
+    story_points: t.story_points || null,
+  }
+}
+
+function clearTemplate() {
+  selectedTemplate.value = null
+  form.value = defaultForm()
+}
 
 async function submit() {
   if (!form.value.title.trim()) return
   loading.value = true
   try {
     const issue = await issuesStore.createIssue(props.projectId, form.value)
-    emit('created', issue); emit('close')
-  } finally { loading.value = false }
+    emit('created', issue)
+    emit('close')
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -88,4 +138,15 @@ async function submit() {
 .form-group { margin-bottom: 0.9rem; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1.25rem; }
+
+.template-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.template-chip {
+  font-size: 0.72rem; padding: 3px 10px; border-radius: 20px; cursor: pointer;
+  border: 1px solid var(--border2); background: var(--bg3); color: var(--text2);
+  transition: all 0.15s;
+}
+.template-chip:hover { border-color: var(--accent); color: var(--accent2); }
+.template-chip.active { border-color: var(--accent); background: rgba(92,79,255,0.12); color: var(--accent2); }
+.template-chip.clear { border-color: transparent; color: var(--text3); }
+.template-chip.clear:hover { color: var(--red); }
 </style>

@@ -95,12 +95,15 @@ import Navbar from '@/components/Navbar.vue'
 import CreateIssueModal from '@/components/CreateIssueModal.vue'
 import { useProjectsStore } from '@/store/projects'
 import { useIssuesStore } from '@/store/issues'
+import { useAuthStore } from '@/store/auth'
 import { sprintsApi } from '@/api'
+import { useWebSocket } from '@/composables/useWebSocket'
 
 const route = useRoute()
 const router = useRouter()
 const projectsStore = useProjectsStore()
 const issuesStore = useIssuesStore()
+const authStore = useAuthStore()
 const projectId = computed(() => Number(route.params.id))
 const sprints = ref([])
 const showCreate = ref(false)
@@ -110,7 +113,21 @@ const sprintForm = ref({ name: '', goal: '' })
 
 const backlogIssues = computed(() => issuesStore.issues.filter(i => !i.sprint_id && i.status === 'backlog'))
 
-onMounted(loadData)
+onMounted(async () => {
+  await loadData()
+  const token = authStore.token
+  if (token) {
+    useWebSocket(projectId.value, token, {
+      'issue.created': () => loadData(),
+      'issue.updated': () => loadData(),
+      'issue.deleted': () => loadData(),
+      'sprint.started': () => loadData(),
+      'sprint.completed': () => loadData(),
+      'poll': () => loadData(),
+    })
+  }
+  document.addEventListener('axelo:create-issue', () => { showCreate.value = true })
+})
 
 async function loadData() {
   await projectsStore.fetchProject(projectId.value)

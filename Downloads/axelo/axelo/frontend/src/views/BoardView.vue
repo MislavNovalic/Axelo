@@ -8,8 +8,12 @@
         <router-link :to="`/projects/${projectId}/backlog`" class="sidebar-item"><span class="icon">📋</span> Backlog</router-link>
         <div class="sidebar-section-title">Sprint</div>
         <div v-if="activeSprint" class="sprint-info">
-          <div class="sprint-badge">● ACTIVE</div>
+          <div class="sprint-badge">
+            <span class="ws-dot" :class="wsConnected ? 'live' : 'offline'" :title="wsConnected ? 'Live' : 'Polling'"></span>
+            ACTIVE
+          </div>
           <div class="sprint-name">{{ activeSprint.name }}</div>
+          <BurndownChart :project-id="projectId" :sprint-id="activeSprint.id" />
         </div>
         <div v-else class="sprint-empty">No active sprint</div>
       </aside>
@@ -74,14 +78,18 @@ import { useRoute, useRouter } from 'vue-router'
 import Navbar from '@/components/Navbar.vue'
 import IssueCard from '@/components/IssueCard.vue'
 import CreateIssueModal from '@/components/CreateIssueModal.vue'
+import BurndownChart from '@/components/BurndownChart.vue'
 import { useProjectsStore } from '@/store/projects'
 import { useIssuesStore } from '@/store/issues'
+import { useAuthStore } from '@/store/auth'
 import { sprintsApi } from '@/api'
+import { useWebSocket } from '@/composables/useWebSocket'
 
 const route = useRoute()
 const router = useRouter()
 const projectsStore = useProjectsStore()
 const issuesStore = useIssuesStore()
+const authStore = useAuthStore()
 const projectId = computed(() => Number(route.params.id))
 const showCreate = ref(false)
 const draggedIssue = ref(null)
@@ -103,11 +111,45 @@ async function loadIssues() {
   await issuesStore.fetchIssues(projectId.value, active ? { sprint_id: active.id } : {})
 }
 
+let wsHandle = null
+const wsConnected = ref(false)
+
 onMounted(async () => {
   await projectsStore.fetchProject(projectId.value)
   const r = await sprintsApi.list(projectId.value)
   sprints.value = r.data
   await loadIssues()
+
+  const token = authStore.token
+  if (token) {
+    wsHandle = useWebSocket(projectId.value, token, {
+      'issue.created': () => loadIssues(),
+      'issue.updated': (data) => {
+        const idx = issuesStore.issues.findIndex(i => i.id === data.id)
+        if (idx !== -1) Object.assign(issuesStore.issues[idx], data)
+        else loadIssues()
+      },
+      'issue.deleted': (data) => {
+        issuesStore.issues = issuesStore.issues.filter(i => i.id !== data.id)
+      },
+      'sprint.started': async () => {
+        const r2 = await sprintsApi.list(projectId.value)
+        sprints.value = r2.data
+        loadIssues()
+      },
+      'sprint.completed': async () => {
+        const r2 = await sprintsApi.list(projectId.value)
+        sprints.value = r2.data
+        loadIssues()
+      },
+      'poll': () => loadIssues(),
+    })
+  }
+})
+
+// Listen for create-issue keyboard shortcut
+onMounted(() => {
+  document.addEventListener('axelo:create-issue', () => { showCreate.value = true })
 })
 
 async function onDrop(event, newStatus) {
@@ -124,7 +166,7 @@ function openIssue(issue) { router.push(`/projects/${projectId.value}/issues/${i
 .app-shell { display: flex; flex-direction: column; min-height: 100vh; background: var(--bg); }
 .shell-body { display: flex; flex: 1; overflow: hidden; height: calc(100vh - 52px); }
 .sidebar {
-  width: 200px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border);
+  width: 210px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--border);
   display: flex; flex-direction: column; padding: 1rem 0.75rem; gap: 2px; overflow-y: auto;
 }
 .sidebar-section-title {
@@ -139,9 +181,15 @@ function openIssue(issue) { router.push(`/projects/${projectId.value}/issues/${i
 .sidebar-item.active { background: rgba(92,79,255,0.15); color: var(--accent2); }
 .icon { font-size: 0.9rem; width: 18px; text-align: center; }
 .sprint-info { padding: 8px 10px; border-radius: 7px; background: rgba(0,217,126,0.08); border: 1px solid rgba(0,217,126,0.15); }
-.sprint-badge { font-size: 0.65rem; color: var(--green); font-weight: 600; margin-bottom: 3px; }
+.sprint-badge { font-size: 0.65rem; color: var(--green); font-weight: 600; margin-bottom: 3px; display: flex; align-items: center; gap: 5px; }
 .sprint-name { font-size: 0.8rem; color: var(--text); font-weight: 500; }
 .sprint-empty { font-size: 0.78rem; color: var(--text3); padding: 6px 10px; }
+
+.ws-dot {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+}
+.ws-dot.live { background: var(--green); box-shadow: 0 0 4px var(--green); }
+.ws-dot.offline { background: var(--text3); }
 
 /* Board */
 .content { flex: 1; overflow-x: auto; padding: 1.5rem; display: flex; flex-direction: column; }

@@ -15,7 +15,12 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # A07: Account lockout fields
+    failed_login_attempts = Column(Integer, default=0, nullable=False)
+    locked_until = Column(DateTime(timezone=True), nullable=True)
+
     memberships = relationship("ProjectMember", back_populates="user")
     assigned_issues = relationship("Issue", foreign_keys="Issue.assignee_id", back_populates="assignee")
     reported_issues = relationship("Issue", foreign_keys="Issue.reporter_id", back_populates="reporter")
     comments = relationship("Comment", back_populates="author")
+    notifications = relationship("Notification", back_populates="user")

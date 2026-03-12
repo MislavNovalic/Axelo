@@ -23,6 +23,17 @@
       <button class="btn-sm ghost" @click="$emit('new-project')">+ Project</button>
       <button class="btn-sm primary" @click="$emit('new-issue')">+ Issue</button>
 
+      <!-- Global search trigger -->
+      <button class="search-trigger" @click="openSearch" title="Search (Ctrl+K)">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <span class="search-hint">Ctrl+K</span>
+      </button>
+
+      <!-- Notifications -->
+      <NotificationBell />
+
       <!-- Theme toggle -->
       <button class="theme-toggle" @click="toggleTheme" :title="isDark ? 'Switch to Light' : 'Switch to Dark'">
         <span v-if="isDark">☀️</span>
@@ -48,11 +59,12 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, inject, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { onClickOutside } from '@vueuse/core'
 import { useAuthStore } from '@/store/auth'
 import { useProjectsStore } from '@/store/projects'
+import NotificationBell from '@/components/NotificationBell.vue'
 
 defineEmits(['new-project', 'new-issue'])
 const route = useRoute()
@@ -62,6 +74,7 @@ const projectsStore = useProjectsStore()
 const menuOpen = ref(false)
 const avatarRef = ref(null)
 const isDark = ref(true)
+const openSearch = inject('openSearch', () => {})
 
 const user = computed(() => auth.user)
 const currentProject = computed(() => projectsStore.currentProject)
@@ -152,6 +165,16 @@ function handleLogout() {
   background: rgba(92,79,255,0.1); padding: 2px 7px; border-radius: 4px;
 }
 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+
+.search-trigger {
+  display: flex; align-items: center; gap: 6px;
+  height: 32px; padding: 0 10px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg3);
+  cursor: pointer; color: var(--text3); font-size: 0.72rem;
+  transition: border-color 0.15s, color 0.15s;
+}
+.search-trigger:hover { border-color: var(--accent); color: var(--text2); }
+.search-hint { font-family: var(--font-mono); font-size: 0.65rem; }
 
 .theme-toggle {
   width: 32px; height: 32px; border-radius: 8px;
