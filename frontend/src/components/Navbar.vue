@@ -17,6 +17,7 @@
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/roadmap`" class="nav-link" :class="{ active: route.name === 'Roadmap' }">Roadmap</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/ai/sprint-planner`" class="nav-link ai-link" :class="{ active: route.name === 'AiPlanner' }">✦ AI Planner</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/import`" class="nav-link" :class="{ active: route.name === 'Importer' }">Import</router-link>
+      <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/settings`" class="nav-link" :class="{ active: route.name === 'Settings' }">Settings</router-link>
     </div>
 
     <!-- Mobile slide-down menu -->
@@ -30,6 +31,7 @@
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/roadmap`" class="nav-link" :class="{ active: route.name === 'Roadmap' }">Roadmap</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/ai/sprint-planner`" class="nav-link ai-link" :class="{ active: route.name === 'AiPlanner' }">✦ AI Planner</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/import`" class="nav-link" :class="{ active: route.name === 'Importer' }">Import</router-link>
+      <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/settings`" class="nav-link" :class="{ active: route.name === 'Settings' }">Settings</router-link>
       <div v-if="currentProject" class="mobile-breadcrumb">
         <span class="crumb-sep">/</span>
         <span class="crumb-name">{{ currentProject.name }}</span>
@@ -82,7 +84,7 @@
             <div class="dropdown-email">{{ user?.email }}</div>
           </div>
           <div class="dropdown-divider"></div>
-          <div class="dropdown-item">⚙ Settings</div>
+          <div class="dropdown-item" @click="goToSettings">⚙ Settings</div>
           <div class="dropdown-item">👥 Team</div>
           <div class="dropdown-divider"></div>
           <div class="dropdown-item danger" @click="handleLogout">↩ Sign out</div>
@@ -169,6 +171,11 @@ function applyTheme() {
 function openSearch() {
   // SearchPalette listens for Cmd+K globally — just fire the keyboard event
   document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', metaKey: true, ctrlKey: true, bubbles: true }))
+}
+
+function goToSettings() {
+  menuOpen.value = false
+  if (currentProject.value) router.push(`/projects/${currentProject.value.id}/settings`)
 }
 
 function handleLogout() {
