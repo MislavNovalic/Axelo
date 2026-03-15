@@ -14,7 +14,7 @@ cp .env.example .env        # then edit SECRET_KEY and POSTGRES_PASSWORD
 docker compose up --build
 ```
 
-- **App** → http://localhost:3000
+- **App** → http://localhost:4173
 - **API docs** → http://localhost:8000/docs
 
 ---
