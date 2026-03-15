@@ -1,0 +1,199 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Ubuntu+Mono:wght@400;700&display=swap');
+
+:root {
+  --bg:           #070d09;
+  --bg2:          #0d1610;
+  --bg3:          #111e14;
+  --border:       rgba(255,255,255,0.07);
+  --border2:      rgba(255,255,255,0.12);
+  --accent:       #10b981;
+  --accent2:      #34d399;
+  --accent-glow:  rgba(16,185,129,0.35);
+  --text:         #f0f8f4;
+  --text2:        #90b09a;
+  --text3:        #4a6455;
+  --green:        #00d97e;
+  --red:          #ff4f6a;
+  --orange:       #ff8c42;
+  --yellow:       #ffd166;
+  --font-display: 'Ubuntu', sans-serif;
+  --font-body:    'Ubuntu', sans-serif;
+  --font-mono:    'Ubuntu Mono', monospace;
+}
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+}
+
+@layer components {
+  /* ── Buttons ── */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 18px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 16px rgba(16,185,129,0.3);
+  }
+  .btn-primary:hover {
+    background: var(--accent2);
+    box-shadow: 0 4px 24px rgba(16,185,129,0.5);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active { transform: translateY(0); }
+  .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.04);
+    color: var(--text2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-ghost:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: var(--border2);
+    color: var(--text);
+  }
+
+  .btn-sm {
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-family: var(--font-display);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .btn-sm.primary {
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(16,185,129,0.3);
+  }
+  .btn-sm.primary:hover { background: var(--accent2); }
+  .btn-sm.ghost {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .btn-sm.ghost:hover { border-color: var(--border2); color: var(--text); }
+
+  /* ── Inputs ── */
+  .fd-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.9rem;
+    font-family: var(--font-body);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .fd-input::placeholder { color: var(--text3); }
+  .fd-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(16,185,129,0.15);
+  }
+
+  /* keep old .input alias for compatibility */
+  .input { @apply fd-input; }
+
+  /* ── Cards ── */
+  .fd-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .card { @apply fd-card; }
+
+  /* ── Form label ── */
+  .fd-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 0.45rem;
+  }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 0.72rem;
+    font-weight: 500;
+  }
+
+  /* ── Section title ── */
+  .section-title {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: -0.01em;
+  }
+
+  /* ── Progress bar ── */
+  .progress-bar {
+    height: 3px;
+    background: var(--bg3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+}
+
+/* ── Responsive Utilities ───────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .hide-mobile { display: none !important; }
+}
+@media (max-width: 1024px) {
+  .hide-tablet { display: none !important; }
+}

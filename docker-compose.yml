@@ -1,0 +1,65 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: axelo
+      POSTGRES_PASSWORD: axelo
+      POSTGRES_DB: axelo
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # A05: Don't expose DB port to host
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U axelo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql://axelo:axelo@db:5432/axelo
+      SECRET_KEY: change-me-in-production
+      UPLOAD_DIR: /uploads
+      ENVIRONMENT: development
+      ALLOWED_ORIGINS: http://localhost:4173,http://localhost:5173
+      # Phase 3 — OAuth
+      GOOGLE_CLIENT_ID: ""
+      GOOGLE_CLIENT_SECRET: ""
+      GITHUB_CLIENT_ID: ""
+      GITHUB_CLIENT_SECRET: ""
+      FRONTEND_URL: "http://localhost:4173"
+      # Phase 4 — AI
+      ANTHROPIC_API_KEY: ""
+      AI_ENABLED: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+    # A05: Only expose backend via nginx proxy (comment out for direct API dev access)
+    expose:
+      - "8000"
+    ports:
+      - "9876:8000"   # Keep for dev; remove in production
+    volumes:
+      - uploads:/uploads
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "4173:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  uploads:
