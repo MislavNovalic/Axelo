@@ -131,6 +131,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import { authApi } from '@/api'
 
 const router = useRouter()
 const auth = useAuthStore()

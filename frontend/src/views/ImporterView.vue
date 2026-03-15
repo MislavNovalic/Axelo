@@ -222,8 +222,14 @@ async function pollJob(job) {
 }
 
 onMounted(async () => {
-  const [projRes] = await Promise.all([projectsApi.get(projectId), fetchJobs()])
-  project.value = projRes.data
+  try {
+    const [projRes] = await Promise.all([projectsApi.get(projectId), fetchJobs()])
+    project.value = projRes.data
+  } catch (e) {
+    if (e.response?.status === 403) {
+      importError.value = 'You need Admin or Owner role to access the importer.'
+    }
+  }
 })
 </script>
 
