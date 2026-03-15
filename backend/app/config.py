@@ -40,6 +40,10 @@ class Settings(BaseSettings):
     CAPTCHA_SECRET_KEY: str = ""                   # Turnstile: secret key from dash.cloudflare.com
     CAPTCHA_SITE_KEY: str = ""                     # Turnstile: site key (safe to expose to frontend)
 
+    # Phase 5 — Redis / async task queue
+    REDIS_URL: str = "redis://localhost:6379/0"
+    EMAIL_NOTIFICATIONS_ENABLED: bool = True   # master switch for queued email notifications
+
     # Content-Security-Policy violation reporting (optional)
     # Point to a collector such as https://report-uri.com or your own endpoint
     # Leave empty to omit the report-uri directive

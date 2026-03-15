@@ -1,6 +1,16 @@
 version: "3.9"
 
 services:
+  redis:
+    image: redis:7-alpine
+    expose:
+      - "6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   db:
     image: postgres:16-alpine
     environment:
@@ -35,8 +45,12 @@ services:
       # Phase 4 — AI
       ANTHROPIC_API_KEY: ""
       AI_ENABLED: "true"
+      # Phase 5 — Redis
+      REDIS_URL: "redis://redis:6379/0"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     # A05: Only expose backend via nginx proxy (comment out for direct API dev access)
     expose:
@@ -51,6 +65,30 @@ services:
       timeout: 5s
       retries: 12
       start_period: 15s
+
+  worker:
+    build: ./backend
+    command: arq app.core.queue.WorkerSettings
+    environment:
+      DATABASE_URL: postgresql://axelo:axelo@db:5432/axelo
+      SECRET_KEY: change-me-in-production
+      UPLOAD_DIR: /uploads
+      ENVIRONMENT: development
+      FRONTEND_URL: "http://localhost:4173"
+      REDIS_URL: "redis://redis:6379/0"
+      # Email (SMTP) — same as backend
+      SMTP_HOST: ""
+      SMTP_PORT: "587"
+      SMTP_USERNAME: ""
+      SMTP_PASSWORD: ""
+      SMTP_FROM: "noreply@axelo.dev"
+      SMTP_FROM_NAME: "Axelo"
+      SMTP_TLS: "true"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
 
   frontend:
     build: ./frontend

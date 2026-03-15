@@ -88,6 +88,89 @@ _ALREADY_VERIFIED_BODY = """\
 <a href="{frontend_url}/login" class="btn">Go to Login</a>
 """
 
+# ── Notification email templates ────────────────────────────────────────────
+
+_NOTIF_FOOTER = """\
+<p style="font-size:12px;color:#555;margin-top:24px;">
+  You received this because you have email notifications enabled on Axelo.<br>
+  <a href="{frontend_url}/settings" style="color:#5c4fff;">Manage notification preferences</a>
+</p>
+"""
+
+_ASSIGNED_BODY = """\
+<p>Hi {name},</p>
+<p><strong>{actor}</strong> assigned you to an issue{project_line}:</p>
+<p style="padding:12px 16px;background:#1e1e1e;border-left:3px solid #5c4fff;border-radius:4px;font-size:14px;color:#e0e0e0;">
+  {title}
+</p>
+<p>{body}</p>
+<a href="{link}" class="btn">View Issue</a>
+""" + _NOTIF_FOOTER
+
+_MENTIONED_BODY = """\
+<p>Hi {name},</p>
+<p><strong>{actor}</strong> mentioned you{project_line}:</p>
+<p style="padding:12px 16px;background:#1e1e1e;border-left:3px solid #bb5cf7;border-radius:4px;font-size:14px;color:#e0e0e0;">
+  {body}
+</p>
+<a href="{link}" class="btn">View Thread</a>
+""" + _NOTIF_FOOTER
+
+_COMMENTED_BODY = """\
+<p>Hi {name},</p>
+<p><strong>{actor}</strong> commented on an issue{project_line}:</p>
+<p style="padding:12px 16px;background:#1e1e1e;border-left:3px solid #10b981;border-radius:4px;font-size:14px;color:#e0e0e0;">
+  <em>{title}</em>
+</p>
+<p>{body}</p>
+<a href="{link}" class="btn">View Comment</a>
+""" + _NOTIF_FOOTER
+
+_SPRINT_STARTED_BODY = """\
+<p>Hi {name},</p>
+<p>A new sprint has started{project_line}:</p>
+<p style="padding:12px 16px;background:#1e1e1e;border-left:3px solid #00d97e;border-radius:4px;font-size:16px;font-weight:700;color:#e0e0e0;">
+  🚀 {title}
+</p>
+<p>{body}</p>
+<a href="{link}" class="btn">View Sprint Board</a>
+""" + _NOTIF_FOOTER
+
+_SPRINT_COMPLETED_BODY = """\
+<p>Hi {name},</p>
+<p>A sprint has been completed{project_line}:</p>
+<p style="padding:12px 16px;background:#1e1e1e;border-left:3px solid #ffd166;border-radius:4px;font-size:16px;font-weight:700;color:#e0e0e0;">
+  ✅ {title}
+</p>
+<p>{body}</p>
+<a href="{link}" class="btn">View Sprint Summary</a>
+""" + _NOTIF_FOOTER
+
+_ADDED_TO_PROJECT_BODY = """\
+<p>Hi {name},</p>
+<p><strong>{actor}</strong> added you to a project:</p>
+<p style="padding:12px 16px;background:#1e1e1e;border-left:3px solid #06b6d4;border-radius:4px;font-size:16px;font-weight:700;color:#e0e0e0;">
+  📁 {title}
+</p>
+<p>{body}</p>
+<a href="{link}" class="btn">Open Project</a>
+""" + _NOTIF_FOOTER
+
+_ROLE_CHANGED_BODY = """\
+<p>Hi {name},</p>
+<p>Your role has been updated{project_line} by <strong>{actor}</strong>.</p>
+<p style="padding:12px 16px;background:#1e1e1e;border-left:3px solid #ff8c42;border-radius:4px;font-size:14px;color:#e0e0e0;">
+  {body}
+</p>
+<a href="{link}" class="btn">View Project</a>
+""" + _NOTIF_FOOTER
+
+_GENERIC_NOTIF_BODY = """\
+<p>Hi {name},</p>
+<p>{body}</p>
+<a href="{link}" class="btn">View in Axelo</a>
+""" + _NOTIF_FOOTER
+
 
 async def _send(to_email: str, subject: str, html: str, plain: str) -> None:
     """Low-level async SMTP send. Raises on failure."""
@@ -138,3 +221,142 @@ async def send_verification_email(to_email: str, full_name: str, token: str) -> 
     plain = _VERIFY_PLAIN.format(name=safe_name, verify_url=verify_url)
 
     await _send(to_email, "Verify your Axelo email address", full_html, plain)
+
+
+# ── Shared notification email builder ───────────────────────────────────────
+
+def _build_notif_email(subject: str, body_template: str, **kwargs) -> tuple[str, str]:
+    """Render subject + full HTML for a notification email."""
+    import html as _html
+    safe = {k: _html.escape(str(v)) for k, v in kwargs.items()}
+    body_html = body_template.format(**safe, frontend_url=settings.FRONTEND_URL)
+    full_html = _BASE_HTML.format(
+        subject=subject,
+        body=body_html,
+        frontend_url=settings.FRONTEND_URL,
+    )
+    plain = (
+        f"{kwargs.get('title', subject)}\n\n"
+        f"{kwargs.get('body', '')}\n\n"
+        f"View: {kwargs.get('link', settings.FRONTEND_URL)}"
+    )
+    return full_html, plain
+
+
+def _project_line(project_name: str) -> str:
+    import html as _html
+    return f" in <strong>{_html.escape(project_name)}</strong>" if project_name else ""
+
+
+# ── Notification email senders ───────────────────────────────────────────────
+
+async def send_assigned_email(
+    *, to_email: str, to_name: str, title: str, body: str,
+    link: str = "", actor_name: str = "", project_name: str = "",
+) -> None:
+    html, plain = _build_notif_email(
+        f"You were assigned: {title}", _ASSIGNED_BODY,
+        name=to_name.split()[0] if to_name else "there",
+        actor=actor_name or "Someone",
+        title=title, body=body, link=link or settings.FRONTEND_URL,
+        project_line=_project_line(project_name),
+    )
+    await _send(to_email, f"Assigned to you: {title}", html, plain)
+
+
+async def send_mentioned_email(
+    *, to_email: str, to_name: str, title: str, body: str,
+    link: str = "", actor_name: str = "", project_name: str = "",
+) -> None:
+    html, plain = _build_notif_email(
+        f"{actor_name or 'Someone'} mentioned you", _MENTIONED_BODY,
+        name=to_name.split()[0] if to_name else "there",
+        actor=actor_name or "Someone",
+        title=title, body=body, link=link or settings.FRONTEND_URL,
+        project_line=_project_line(project_name),
+    )
+    await _send(to_email, f"{actor_name or 'Someone'} mentioned you", html, plain)
+
+
+async def send_commented_email(
+    *, to_email: str, to_name: str, title: str, body: str,
+    link: str = "", actor_name: str = "", project_name: str = "",
+) -> None:
+    html, plain = _build_notif_email(
+        f"New comment on: {title}", _COMMENTED_BODY,
+        name=to_name.split()[0] if to_name else "there",
+        actor=actor_name or "Someone",
+        title=title, body=body, link=link or settings.FRONTEND_URL,
+        project_line=_project_line(project_name),
+    )
+    await _send(to_email, f"New comment on: {title}", html, plain)
+
+
+async def send_sprint_started_email(
+    *, to_email: str, to_name: str, title: str, body: str,
+    link: str = "", actor_name: str = "", project_name: str = "",
+) -> None:
+    html, plain = _build_notif_email(
+        f"Sprint started: {title}", _SPRINT_STARTED_BODY,
+        name=to_name.split()[0] if to_name else "there",
+        actor=actor_name or "Someone",
+        title=title, body=body, link=link or settings.FRONTEND_URL,
+        project_line=_project_line(project_name),
+    )
+    await _send(to_email, f"🚀 Sprint started: {title}", html, plain)
+
+
+async def send_sprint_completed_email(
+    *, to_email: str, to_name: str, title: str, body: str,
+    link: str = "", actor_name: str = "", project_name: str = "",
+) -> None:
+    html, plain = _build_notif_email(
+        f"Sprint completed: {title}", _SPRINT_COMPLETED_BODY,
+        name=to_name.split()[0] if to_name else "there",
+        actor=actor_name or "Someone",
+        title=title, body=body, link=link or settings.FRONTEND_URL,
+        project_line=_project_line(project_name),
+    )
+    await _send(to_email, f"✅ Sprint completed: {title}", html, plain)
+
+
+async def send_added_to_project_email(
+    *, to_email: str, to_name: str, title: str, body: str,
+    link: str = "", actor_name: str = "", project_name: str = "",
+) -> None:
+    html, plain = _build_notif_email(
+        f"Added to project: {title}", _ADDED_TO_PROJECT_BODY,
+        name=to_name.split()[0] if to_name else "there",
+        actor=actor_name or "Someone",
+        title=title, body=body, link=link or settings.FRONTEND_URL,
+        project_line=_project_line(project_name),
+    )
+    await _send(to_email, f"You've been added to: {title}", html, plain)
+
+
+async def send_role_changed_email(
+    *, to_email: str, to_name: str, title: str, body: str,
+    link: str = "", actor_name: str = "", project_name: str = "",
+) -> None:
+    html, plain = _build_notif_email(
+        "Your role has been updated", _ROLE_CHANGED_BODY,
+        name=to_name.split()[0] if to_name else "there",
+        actor=actor_name or "Someone",
+        title=title, body=body, link=link or settings.FRONTEND_URL,
+        project_line=_project_line(project_name),
+    )
+    await _send(to_email, "Your role has been updated", html, plain)
+
+
+async def send_generic_notification_email(
+    *, to_email: str, to_name: str, title: str, body: str,
+    link: str = "", actor_name: str = "", project_name: str = "",
+) -> None:
+    html, plain = _build_notif_email(
+        title, _GENERIC_NOTIF_BODY,
+        name=to_name.split()[0] if to_name else "there",
+        actor=actor_name or "Someone",
+        title=title, body=body, link=link or settings.FRONTEND_URL,
+        project_line=_project_line(project_name),
+    )
+    await _send(to_email, title, html, plain)
