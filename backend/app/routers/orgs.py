@@ -133,8 +133,9 @@ def list_my_orgs(
     current_user: User = Depends(get_current_user),
 ):
     memberships = db.query(OrgMember).filter_by(user_id=current_user.id).limit(50).all()
-    orgs = [db.query(Organisation).get(m.org_id) for m in memberships]
-    return [_fmt_org(o, db) for o in orgs if o]
+    org_ids = [m.org_id for m in memberships]
+    orgs = db.query(Organisation).filter(Organisation.id.in_(org_ids)).all() if org_ids else []
+    return [_fmt_org(o, db) for o in orgs]
 
 
 @router.get("/{slug}")

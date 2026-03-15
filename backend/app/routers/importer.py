@@ -232,8 +232,10 @@ def _run_import(job_id: int, project_id: int, parsed: list[dict], db_url: str):
         skipped = 0
         errors = []
 
-        # Start order after existing issues
-        last_order = db.query(Issue).filter(Issue.project_id == project_id).count()
+        # Start order and key counter after existing issues
+        base_count = db.query(Issue).filter(Issue.project_id == project_id).count()
+        last_order = base_count
+        next_key_num = base_count + 1
 
         for idx, item in enumerate(parsed):
             try:
@@ -241,9 +243,7 @@ def _run_import(job_id: int, project_id: int, parsed: list[dict], db_url: str):
                     skipped += 1
                     continue
 
-                # Generate key
-                existing_count = db.query(Issue).filter(Issue.project_id == project_id).count()
-                key = f"{project.key}-{existing_count + 1}"
+                key = f"{project.key}-{next_key_num}"
 
                 issue = Issue(
                     project_id=project_id,
@@ -260,12 +260,16 @@ def _run_import(job_id: int, project_id: int, parsed: list[dict], db_url: str):
                 db.add(issue)
                 db.flush()
                 imported += 1
+                next_key_num += 1
 
                 # Commit in batches of 50
                 if imported % 50 == 0:
                     db.commit()
 
             except Exception as e:
+                db.rollback()
+                # Re-sync counter from DB after rollback (unflushed issues were lost)
+                next_key_num = db.query(Issue).filter(Issue.project_id == project_id).count() + 1
                 skipped += 1
                 errors.append(f"Row {idx+1}: {str(e)[:200]}")
 

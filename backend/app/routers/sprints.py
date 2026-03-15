@@ -8,6 +8,7 @@ from app.models.project import Project, ProjectMember
 from app.models.sprint import Sprint, SprintStatus
 from app.schemas.sprint import SprintCreate, SprintUpdate, SprintOut
 from app.core.deps import get_current_user
+from app.core.permissions import require_project_write
 from app.core.ws_manager import manager
 from app.core.notify import notify
 
@@ -44,7 +45,8 @@ def list_sprints(project_id: int, db: Session = Depends(get_db), current_user: U
 
 @router.post("/", response_model=SprintOut, status_code=status.HTTP_201_CREATED)
 def create_sprint(project_id: int, sprint_in: SprintCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    get_project_and_check_access(project_id, current_user, db)
+    project = get_project_and_check_access(project_id, current_user, db)
+    require_project_write(project, current_user, db)
     sprint = Sprint(**sprint_in.model_dump(), project_id=project_id)
     db.add(sprint)
     db.commit()
@@ -62,6 +64,7 @@ def update_sprint(
     current_user: User = Depends(get_current_user),
 ):
     project = get_project_and_check_access(project_id, current_user, db)
+    require_project_write(project, current_user, db)
     sprint = db.query(Sprint).filter(Sprint.id == sprint_id, Sprint.project_id == project_id).first()
     if not sprint:
         raise HTTPException(status_code=404, detail="Sprint not found")
@@ -108,7 +111,8 @@ def update_sprint(
 
 @router.delete("/{sprint_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_sprint(project_id: int, sprint_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    get_project_and_check_access(project_id, current_user, db)
+    project = get_project_and_check_access(project_id, current_user, db)
+    require_project_write(project, current_user, db)
     sprint = db.query(Sprint).filter(Sprint.id == sprint_id, Sprint.project_id == project_id).first()
     if not sprint:
         raise HTTPException(status_code=404, detail="Sprint not found")

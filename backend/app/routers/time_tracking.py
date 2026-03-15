@@ -139,7 +139,9 @@ def delete_time_log(
         project_id=project_id, user_id=current_user.id
     ).first()
     from app.models.project import MemberRole
-    is_admin = member and member.role in (MemberRole.admin, MemberRole.owner)
+    is_admin = (project.owner_id == current_user.id) or (
+        member and member.role in (MemberRole.admin, MemberRole.owner)
+    )
     if log.user_id != current_user.id and not is_admin:
         raise HTTPException(status_code=403, detail="You can only delete your own time logs")
 
