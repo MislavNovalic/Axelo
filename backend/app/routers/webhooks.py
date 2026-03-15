@@ -221,11 +221,7 @@ async def test_webhook(
     if not hook:
         raise HTTPException(status_code=404, detail="Webhook not found")
 
-    # Force the ping to all active subscriptions regardless of event list
-    saved_events = hook.events
-    hook.events = ["ping"]
-
-    from app.core.webhook_delivery import ALLOWED_EVENTS as _AE, _send_delivery
+    from app.core.webhook_delivery import _send_delivery
     from app.models.webhook import WebhookDelivery as _WD
     delivery = _WD(
         webhook_id=hook.id,
@@ -237,7 +233,6 @@ async def test_webhook(
     db.add(delivery)
     db.commit()
     db.refresh(delivery)
-    hook.events = saved_events
 
     background_tasks.add_task(_send_delivery, db, hook, delivery)
     return {"message": "Test ping queued", "delivery_id": delivery.id}

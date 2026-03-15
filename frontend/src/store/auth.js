@@ -42,7 +42,6 @@ export const useAuthStore = defineStore('auth', () => {
   async function register(data) {
     const res = await authApi.register(data)
     return res.data   // return user so component can check email_verified
-    await login(data.email, data.password)
   }
 
   async function fetchMe() {

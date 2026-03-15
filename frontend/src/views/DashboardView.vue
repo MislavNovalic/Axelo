@@ -154,7 +154,7 @@
               <div class="p4-desc">Group projects &amp; manage multi-team workspaces</div>
             </router-link>
             <router-link
-              v-if="projects.length"
+              v-if="projects.length && ['owner', 'admin'].includes(myRole(projects[0]))"
               :to="`/projects/${projects[0].id}/import`"
               class="p4-card p4-import"
             >

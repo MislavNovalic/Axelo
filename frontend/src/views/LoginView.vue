@@ -7,8 +7,24 @@
         <span class="logo-name">Axelo</span>
       </div>
       <div class="auth-hero animate-fade-up">
-        <h2>Ship projects<br /><span>without the chaos.</span></h2>
-        <p>The open-source project tracker built for teams who want to move fast — without the Jira tax.</p>
+        <transition name="motto" mode="out-in">
+          <h2 :key="currentMotto">
+            {{ mottos[currentMotto].headline }}<br />
+            <span>{{ mottos[currentMotto].highlight }}</span>
+          </h2>
+        </transition>
+        <transition name="motto-sub" mode="out-in">
+          <p :key="currentMotto">{{ mottos[currentMotto].sub }}</p>
+        </transition>
+        <div class="motto-dots">
+          <span
+            v-for="(_, i) in mottos"
+            :key="i"
+            class="motto-dot"
+            :class="{ active: i === currentMotto }"
+            @click="currentMotto = i"
+          ></span>
+        </div>
         <div class="feature-pills">
           <div class="pill" style="--delay:0.5s"><span class="dot" style="background:#10b981"></span> Kanban Boards</div>
           <div class="pill" style="--delay:0.65s"><span class="dot" style="background:#00d97e"></span> Sprint Planning</div>
@@ -128,9 +144,51 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/store/auth'
+import { authApi } from '@/api'
+
+const mottos = [
+  {
+    headline: 'Ship projects',
+    highlight: 'without the chaos.',
+    sub: 'The open-source project tracker built for teams who want to move fast — without the Jira tax.',
+  },
+  {
+    headline: 'Plan sprints,',
+    highlight: 'ship with confidence.',
+    sub: 'Powerful sprint planning and Kanban boards that keep your team aligned from kickoff to deploy.',
+  },
+  {
+    headline: 'Track every issue,',
+    highlight: 'miss nothing.',
+    sub: 'Capture bugs, features, and tasks in one place — with real-time updates and full team visibility.',
+  },
+  {
+    headline: 'Your team,',
+    highlight: 'your rules.',
+    sub: 'Flexible team roles and self-hostable infrastructure — total control over your workflow and data.',
+  },
+  {
+    headline: 'Open source,',
+    highlight: 'built to last.',
+    sub: 'MIT licensed, FastAPI + Vue 3 powered. Extend it, fork it, own it — no vendor lock-in, ever.',
+  },
+]
+
+const currentMotto = ref(0)
+let mottoTimer = null
+
+onMounted(() => {
+  mottoTimer = setInterval(() => {
+    currentMotto.value = (currentMotto.value + 1) % mottos.length
+  }, 4000)
+})
+
+onUnmounted(() => {
+  clearInterval(mottoTimer)
+})
 
 const router = useRouter()
 const auth = useAuthStore()
@@ -323,5 +381,26 @@ async function resendVerification() {
 }
 .verify-resend-btn:hover:not(:disabled) { background: rgba(255,184,0,0.25); }
 .verify-resend-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* Motto rotation transitions */
+.motto-enter-active { transition: opacity 0.5s ease, transform 0.5s ease; }
+.motto-leave-active { transition: opacity 0.35s ease, transform 0.35s ease; }
+.motto-enter-from { opacity: 0; transform: translateY(14px); }
+.motto-leave-to  { opacity: 0; transform: translateY(-10px); }
+
+.motto-sub-enter-active { transition: opacity 0.5s ease 0.1s, transform 0.5s ease 0.1s; }
+.motto-sub-leave-active { transition: opacity 0.3s ease; }
+.motto-sub-enter-from { opacity: 0; transform: translateY(10px); }
+.motto-sub-leave-to  { opacity: 0; }
+
+/* Indicator dots */
+.motto-dots { display: flex; gap: 6px; margin-top: 1.25rem; }
+.motto-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(255,255,255,0.15); cursor: pointer;
+  transition: background 0.3s, transform 0.3s;
+}
+.motto-dot.active { background: var(--accent2); transform: scale(1.4); }
+.motto-dot:hover:not(.active) { background: rgba(255,255,255,0.35); }
 
 </style>

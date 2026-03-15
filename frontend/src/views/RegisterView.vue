@@ -223,10 +223,15 @@ const passwordStrength = computed(() => {
 })
 
 // ── Submit ────────────────────────────────────────────────────────────────────
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+
 async function submit() {
   error.value = ''
   if (!name.value || !email.value || !password.value) {
     error.value = 'All fields are required'; triggerShake(); return
+  }
+  if (!EMAIL_RE.test(email.value.trim())) {
+    error.value = 'Please enter a valid email address'; triggerShake(); return
   }
   if (password.value.length < 8) {
     error.value = 'Password must be at least 8 characters'; triggerShake(); return
@@ -250,7 +255,8 @@ async function submit() {
       router.push('/')
     }
   } catch (e) {
-    const detail = e.response?.data?.detail || ''
+    const raw = e.response?.data?.detail
+    const detail = Array.isArray(raw) ? raw.map(d => d.msg || d).join(', ') : (raw || '')
     if (detail === 'CAPTCHA_REQUIRED' || detail === 'CAPTCHA_INVALID') {
       error.value = 'CAPTCHA verification failed. Please try again.'
       resetCaptcha()
