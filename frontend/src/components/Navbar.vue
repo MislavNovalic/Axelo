@@ -12,7 +12,6 @@
       <router-link to="/calendar" class="nav-link" :class="{ active: route.name === 'Calendar' }">Calendar</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}`" class="nav-link" :class="{ active: route.name === 'Board' }">Board</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/backlog`" class="nav-link" :class="{ active: route.name === 'Backlog' }">Backlog</router-link>
-      <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/team`" class="nav-link" :class="{ active: route.name === 'Team' }">Team</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/reports`" class="nav-link" :class="{ active: route.name === 'Reports' }">Reports</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/roadmap`" class="nav-link" :class="{ active: route.name === 'Roadmap' }">Roadmap</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/ai/sprint-planner`" class="nav-link ai-link" :class="{ active: route.name === 'AiPlanner' }">✦ AI Planner</router-link>
@@ -26,7 +25,6 @@
       <router-link to="/calendar" class="nav-link" :class="{ active: route.name === 'Calendar' }">Calendar</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}`" class="nav-link" :class="{ active: route.name === 'Board' }">Board</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/backlog`" class="nav-link" :class="{ active: route.name === 'Backlog' }">Backlog</router-link>
-      <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/team`" class="nav-link" :class="{ active: route.name === 'Team' }">Team</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/reports`" class="nav-link" :class="{ active: route.name === 'Reports' }">Reports</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/roadmap`" class="nav-link" :class="{ active: route.name === 'Roadmap' }">Roadmap</router-link>
       <router-link v-if="currentProject" :to="`/projects/${currentProject.id}/ai/sprint-planner`" class="nav-link ai-link" :class="{ active: route.name === 'AiPlanner' }">✦ AI Planner</router-link>
