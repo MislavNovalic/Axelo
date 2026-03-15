@@ -19,6 +19,7 @@ const routes = [
   { path: '/orgs',                               name: 'Orgs',         component: () => import('@/views/OrgsView.vue') },
   { path: '/projects/:id/ai/sprint-planner',     name: 'AiPlanner',   component: () => import('@/views/AiSprintPlannerView.vue') },
   { path: '/projects/:id/import',                name: 'Importer',    component: () => import('@/views/ImporterView.vue') },
+  { path: '/projects/:id/settings',             name: 'Settings',    component: () => import('@/views/SettingsView.vue') },
   { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
